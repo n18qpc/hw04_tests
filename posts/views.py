@@ -47,7 +47,9 @@ def new_post(request):
 
 def profile(request, username):
     author = get_user_model().objects.get(username=username)
-    posts = Post.objects.select_related("author").filter(author__username=username)
+    posts = Post.objects.select_related("author").filter(
+        author__username=username
+    )
     paginator = Paginator(posts, 10)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)

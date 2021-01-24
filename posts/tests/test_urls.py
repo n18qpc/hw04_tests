@@ -53,7 +53,6 @@ class URLTests(TestCase):
             "index.html": "/",
             "group.html": "/group/test-slug/",
             "new_post.html": "/new/",
-            "new_post.html": f"/{self.user.username}/{self.post.id}/edit/",
             "about/author.html": "/about/author/",
             "about/tech.html": "/about/tech/",
         }
@@ -70,6 +69,11 @@ class URLTests(TestCase):
                     response.status_code,
                     status_code
                 )
+
+    def test_urls_edit_posts_uses_correct_template(self):
+        reverse_name = f"/{self.user.username}/{self.post.id}/edit/"
+        response = self.authorized_client.get(reverse_name)
+        self.assertTemplateUsed(response, "new_post.html")
 
     def test_urls_uses_correct_templates(self):
         for template, reverse_name in self.templates_url_names.items():
