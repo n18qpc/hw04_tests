@@ -1,7 +1,6 @@
-{% extends "base.html" %}
+{% extends "includes/base.html" %}
 {% block title %}Об авторе проекта{% endblock %}
 {% block content %}
-{% load user_filters %}
   <main role="main" class="container">
     <div class="row">
       <!-- Левый вспомогательный блок -->
@@ -16,7 +15,7 @@
               </li>
               <li class="list-group-item">
                 <div class="h6 text-muted">
-                  Полезный короткий текст
+                  Ссылки и немного информации 
                 </div>
               </li>
             </ul>                                               
@@ -27,7 +26,9 @@
       <div class="col-md-9">
         <div class="card-body">                    
           <div class="card-text">
-            <p>Текст страницы "Об авторе"</p>
+            <p>
+              Профиль на <a href="https://github.com/n18qpc">Github</a>
+            </p>
           </div>                    
         </div>                
       </div>            

@@ -19,7 +19,7 @@ class Post(models.Model):
         help_text="Введите текст"
     )
     pub_date = models.DateTimeField(
-        "date published",
+        "Дата публикации",
         auto_now_add=True
     )
     author = models.ForeignKey(

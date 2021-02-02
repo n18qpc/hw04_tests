@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "includes/base.html" %}
 {% block title %}Последние обновления на сайте{% endblock %}
 {% block header %}Последние обновления на сайте{% endblock %}
 {% block content %}
@@ -12,5 +12,5 @@
         <p>{{ post.text|linebreaksbr }}</p>
         {% if not forloop.last %}<hr>{% endif %}
     {% endfor %}
-    {% include "paginator.html" %}
+    {% include "includes/paginator.html" %}
 {% endblock %}

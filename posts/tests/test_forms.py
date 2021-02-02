@@ -1,9 +1,8 @@
-from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
 from posts.forms import PostForm
-from posts.models import Post
+from posts.models import Post, User
 
 
 class TaskCreateFormTests(TestCase):
@@ -13,7 +12,7 @@ class TaskCreateFormTests(TestCase):
         cls.form = PostForm()
 
     def setUp(self):
-        self.user = get_user_model().objects.create_user(username="testuser")
+        self.user = User.objects.create_user(username="testuser")
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         self.post = Post.objects.create(
@@ -31,7 +30,7 @@ class TaskCreateFormTests(TestCase):
             data=form_data,
             follow=True
         )
-        self.assertRedirects(response, "/")
+        self.assertRedirects(response, reverse("index"))
         self.assertEqual(Post.objects.count(), posts_count+1)
         self.assertTrue(
             Post.objects.filter(text="Тестовый текст").exists()
@@ -50,5 +49,5 @@ class TaskCreateFormTests(TestCase):
             data=form_data,
             follow=True
         )
-        # self.assertEqual(self.post.text, "Измененный текст")
-        self.assertTrue(Post.objects.filter(text="Измененный текст").exists())
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.text, "Измененный текст")

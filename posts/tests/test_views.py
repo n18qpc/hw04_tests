@@ -1,18 +1,16 @@
 import datetime
 
 from django import forms
-from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from posts.models import Group, Post
+from posts.models import Group, Post, User
 
 
 class PagesTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        User = get_user_model()
         cls.user = User.objects.create_user(username="test_user")
         cls.authorized_client = Client()
         cls.authorized_client.force_login(PagesTest.user)
@@ -39,7 +37,9 @@ class PagesTest(TestCase):
             "group.html": (
                 reverse("group_posts", kwargs={"slug": "test-slug"})
             ),
-            "new_post.html": reverse("new_post")
+            "new_post.html": reverse("new_post"),
+            "about/author.html": reverse("about:author"),
+            "about/tech.html": reverse("about:tech")
         }
         for template, reverse_name in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
@@ -132,17 +132,17 @@ class PagesTest(TestCase):
             "username": PagesTest.user.username,
             "post_id": PagesTest.post.id
         }))
-        form_fields = {
-            "text": forms.fields.CharField,
-            "group": forms.models.ModelChoiceField,
-        }
-        for value, expected in form_fields.items():
-            with self.subTest(value=value):
-                form_field = response.context.get("form").fields.get(value)
-                self.assertIsInstance(
-                    form_field, expected,
-                    f"value={value} {form_field} != {expected}"
-                )
+        post_text_0 = response.context.get("post").text
+        post_pub_date_0 = response.context.get("post").pub_date
+        post_author_0 = response.context.get("post").author
+        post_group_0 = response.context.get("post").group
+        self.assertEqual(post_text_0, "Заголовок текстового поста")
+        self.assertEqual(
+            post_pub_date_0.strftime("%d %m %Y"),
+            datetime.date.today().strftime("%d %m %Y")
+        )
+        self.assertEqual(post_author_0.username, "test_user")
+        self.assertEqual(post_group_0.slug, "test-slug")
 
     def test_post_with_group_in_index(self):
         response = self.authorized_client.get(reverse("index"))
