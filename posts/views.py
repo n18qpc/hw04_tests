@@ -23,7 +23,7 @@ def index(request):
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
     posts = group.posts.all()
-    paginator = Paginator(posts, 10)
+    paginator = Paginator(posts, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     context = {
@@ -45,16 +45,13 @@ def new_post(request):
     return render(request, "new_post.html", {
         "form": form,
         "is_edit": False,
-        "username": request.user.username
     })
 
 
 def profile(request, username):
-    author = User.objects.get(username=username)
-    posts = Post.objects.select_related("author").filter(
-        author__username=username
-    )
-    paginator = Paginator(posts, 10)
+    author = get_object_or_404(User, username=username)
+    posts = author.posts.all()
+    paginator = Paginator(posts, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     return render(request, "profile.html", {
@@ -67,7 +64,6 @@ def profile(request, username):
 
 def post_view(request, username, post_id):
     post = get_object_or_404(Post, id=post_id)
-    author = post.author
     count_posts = post.author.posts.count
     return render(
         request,
@@ -75,14 +71,15 @@ def post_view(request, username, post_id):
         {
             "post": post,
             "count_posts": count_posts,
-            "author": author
+            "author": post.author
         }
     )
 
 
 @login_required
 def post_edit(request, username, post_id):
-    post_edit = get_object_or_404(Post, id=post_id)
+    author = get_object_or_404(User, username=username)
+    post_edit = get_object_or_404(Post, author__exact=author, id=post_id)
     if request.user.username != username:
         return redirect("post", username, post_id)
     form = PostForm(request.POST or None, instance=post_edit)
@@ -92,11 +89,10 @@ def post_edit(request, username, post_id):
         post_edit.group = post_form.group
         post_edit.save()
         return redirect("post", username, post_id)
-    else:
-        return render(request, "new_post.html", {
-            "username": username,
-            "post_id": post_id,
-            "is_edit": True,
-            "form": form,
-            "post_edit": post_edit,
-        })
+    return render(request, "new_post.html", {
+        "username": username,
+        "post_id": post_id,
+        "is_edit": True,
+        "form": form,
+        "post_edit": post_edit,
+    })
