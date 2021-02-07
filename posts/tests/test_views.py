@@ -4,7 +4,6 @@ from django import forms
 from django.test import Client, TestCase
 from django.urls import reverse, reverse_lazy
 
-from posts.forms import PostForm
 from posts.models import Group, Post, User
 
 
@@ -52,11 +51,11 @@ class PagesTest(TestCase):
 
     def test_home_page_show_correct_context(self):
         response = self.authorized_client.get(reverse("index"))
-        post_text_0 = response.context.get(PAGE_NAME)[0].text
-        post_pub_date_0 = response.context.get(PAGE_NAME)[0].pub_date
-        post_author_0 = response.context.get(PAGE_NAME)[0].author
-        post_group_0 = response.context.get(PAGE_NAME)[0].group
-        count_posts_paginator = len(response.context.get(PAGE_NAME).object_list)
+        post_text_0 = response.context.get(PagesTest.PAGE_NAME)[0].text
+        post_pub_date_0 = response.context.get(PagesTest.PAGE_NAME)[0].pub_date
+        post_author_0 = response.context.get(PagesTest.PAGE_NAME)[0].author
+        post_group_0 = response.context.get(PagesTest.PAGE_NAME)[0].group
+        count = len(response.context.get(PagesTest.PAGE_NAME).object_list)
         self.assertEqual(post_text_0, PagesTest.post.text)
         self.assertEqual(
             post_pub_date_0.strftime("%d %m %Y"),
@@ -64,16 +63,16 @@ class PagesTest(TestCase):
         )
         self.assertEqual(post_author_0.username, PagesTest.test_username)
         self.assertEqual(post_group_0.slug, PagesTest.group1.slug)
-        self.assertEqual(count_posts_paginator, 1)
+        self.assertEqual(count, 1)
 
     def test_group_page_show_correct_context(self):
         response = self.authorized_client.get(reverse("group_posts", kwargs={
             "slug": PagesTest.group1.slug
         }))
-        post_text_0 = response.context.get(PAGE_NAME)[0].text
-        post_pub_date_0 = response.context.get(PAGE_NAME)[0].pub_date
-        post_author_0 = response.context.get(PAGE_NAME)[0].author
-        post_group_0 = response.context.get(PAGE_NAME)[0].group
+        post_text_0 = response.context.get(PagesTest.PAGE_NAME)[0].text
+        post_pub_date_0 = response.context.get(PagesTest.PAGE_NAME)[0].pub_date
+        post_author_0 = response.context.get(PagesTest.PAGE_NAME)[0].author
+        post_group_0 = response.context.get(PagesTest.PAGE_NAME)[0].group
         self.assertEqual(post_text_0, PagesTest.post.text)
         self.assertEqual(
             post_pub_date_0.strftime("%d %m %Y"),
@@ -119,11 +118,11 @@ class PagesTest(TestCase):
         response = self.authorized_client.get(reverse("profile", kwargs={
             "username": PagesTest.user.username
         }))
-        post_text_0 = response.context.get(PAGE_NAME)[0].text
-        post_pub_date_0 = response.context.get(PAGE_NAME)[0].pub_date
-        post_author_0 = response.context.get(PAGE_NAME)[0].author
-        post_group_0 = response.context.get(PAGE_NAME)[0].group
-        self.assertEqual(post_text_0, PagesTest.post.title)
+        post_text_0 = response.context.get(PagesTest.PAGE_NAME)[0].text
+        post_pub_date_0 = response.context.get(PagesTest.PAGE_NAME)[0].pub_date
+        post_author_0 = response.context.get(PagesTest.PAGE_NAME)[0].author
+        post_group_0 = response.context.get(PagesTest.PAGE_NAME)[0].group
+        self.assertEqual(post_text_0, PagesTest.post.text)
         self.assertEqual(
             post_pub_date_0.strftime("%d %m %Y"),
             datetime.date.today().strftime("%d %m %Y")
@@ -132,15 +131,16 @@ class PagesTest(TestCase):
         self.assertEqual(post_group_0.slug, PagesTest.group1.slug)
 
     def test_post_page_show_correct_context(self):
-        response = self.authorized_client.get(reverse(PAGE_NAME, kwargs={
+        reverse_post = reverse("post", kwargs={
             "username": PagesTest.user.username,
             "post_id": PagesTest.post.id
-        }))
+        })
+        response = self.authorized_client.get(reverse_post)
         post_text_0 = response.context.get("post").text
         post_pub_date_0 = response.context.get("post").pub_date
         post_author_0 = response.context.get("post").author
         post_group_0 = response.context.get("post").group
-        self.assertEqual(post_text_0, PagesTest.post.title)
+        self.assertEqual(post_text_0, PagesTest.post.text)
         self.assertEqual(
             post_pub_date_0.strftime("%d %m %Y"),
             datetime.date.today().strftime("%d %m %Y")
@@ -150,43 +150,41 @@ class PagesTest(TestCase):
 
     def test_post_with_group_in_index(self):
         response = self.authorized_client.get(reverse("index"))
-        post_group_slug = response.context.get(PAGE_NAME)[0].group.slug
-        self.assertEqual(post_group_slug, PagesTest.group1.slug)
+        group_slug = response.context.get(PagesTest.PAGE_NAME)[0].group.slug
+        self.assertEqual(group_slug, PagesTest.group1.slug)
 
     def test_post_with_group_in_page_group(self):
         response = self.authorized_client.get(
             reverse("group_posts", kwargs={"slug": PagesTest.group1.slug})
         )
-        post_group = response.context.get(PAGE_NAME)[0].group.slug
+        post_group = response.context.get(PagesTest.PAGE_NAME)[0].group.slug
         self.assertEqual(post_group, PagesTest.group1.slug)
 
     def test_post_with_group_unavailable_another_group(self):
         response = self.authorized_client.get(reverse("group_posts", kwargs={
             "slug": PagesTest.group2.slug
         }))
-        post_group_slug = response.context.get(PAGE_NAME)[0].group.slug
-        self.assertNotEqual(post_group_slug, PagesTest.group1.slug)
+        self.assertNotContains(response, PagesTest.post.text)
 
     def test_about_author_available_anonymous(self):
         response = self.anonymous_client.get(reverse_lazy("about:author"))
         status_code = response.status_code
-        self.assertEqual(status_code, 404)
+        self.assertEqual(status_code, 200)
 
     def test_about_tech_available_anonymous(self):
         response = self.anonymous_client.get(reverse_lazy("about:tech"))
         status_code = response.status_code
-        self.assertEqual(status_code, 404)
+        self.assertEqual(status_code, 200)
 
     def test_about_tech_show_correct_template(self):
         response = self.anonymous_client.get(reverse_lazy("about:tech"))
-        self.assertTemplateUsed(response, template)
+        self.assertTemplateUsed(response, "about/tech.html")
 
     def test_about_author_show_correct_template(self):
         response = self.anonymous_client.get(reverse_lazy("about:author"))
-        self.assertTemplateUsed(response, template)
-        self.assert
+        self.assertTemplateUsed(response, "about/author.html")
 
     def test_paginator_show_correct_posts_count(self):
         response = self.authorized_client.get(reverse("index"))
-        count_posts_paginator = len(response.context.get(PAGE_NAME).object_list)
-        self.assertEqual(count_posts_paginator, 1)
+        count = len(response.context.get(PagesTest.PAGE_NAME).object_list)
+        self.assertEqual(count, 1)
