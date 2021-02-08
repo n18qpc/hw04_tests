@@ -78,8 +78,7 @@ def post_view(request, username, post_id):
 
 @login_required
 def post_edit(request, username, post_id):
-    author = get_object_or_404(User, username=username)
-    post_edit = get_object_or_404(Post, author__exact=author, id=post_id)
+    post_edit = get_object_or_404(Post, author__username=username, id=post_id)
     if request.user.username != username:
         return redirect("post", username, post_id)
     form = PostForm(request.POST or None, instance=post_edit)
@@ -91,7 +90,6 @@ def post_edit(request, username, post_id):
         return redirect("post", username, post_id)
     return render(request, "new_post.html", {
         "username": username,
-        "post_id": post_id,
         "is_edit": True,
         "form": form,
         "post_edit": post_edit,
